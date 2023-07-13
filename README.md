@@ -11,7 +11,7 @@ Simple manager and ssh to your servers.
 - /list: show list servers
 - /current: show current server
 - /add (root@abc)
-- /rm (Index | IP): remove an server
-- /connect (Index | IP)
+- /rm (index | root@abc): remove an server
+- /connect (index | root@abc)
 - /exit: reset connected 
 - /cmd (command): execute command

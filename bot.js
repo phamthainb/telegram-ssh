@@ -28,6 +28,7 @@ async function checkOwner(msg) {
     await bot.sendMessage(CHAT_ID, `Got other access\n${JSON.stringify(msg)}`);
     return false;
   }
+  return true;
 }
 
 // /list

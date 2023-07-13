@@ -6,6 +6,7 @@ dotenv.config();
 
 const TOKEN = process.env.BOT_TOKEN || "";
 const CHAT_ID = process.env.CHAT_ID || "";
+const OWNER_IDS = process.env.OWNER_IDS || "";
 
 const SERVERS_FILE = "servers.json";
 
@@ -22,8 +23,19 @@ if (fs.existsSync(SERVERS_FILE)) {
 // Create a new Telegram bot instance
 const bot = new TelegramBot(TOKEN, { polling: true });
 
+async function checkOwner(msg) {
+  if (!OWNER_IDS.includes(msg?.chat?.id)) {
+    await bot.sendMessage(CHAT_ID, `Got other access\n${JSON.stringify(msg)}`);
+    return false;
+  }
+}
+
 // /list
 bot.onText(/\/list/, async (msg) => {
+  const o = await checkOwner(msg);
+  if (!o) {
+    return;
+  }
   let message = `List Server: ${servers.length}\n`;
   servers.forEach((s, i) => {
     message += `${i + 1}: ${s}\n`;
@@ -34,8 +46,12 @@ bot.onText(/\/list/, async (msg) => {
     protect_content: true,
   });
 });
-
+// /current
 bot.onText(/\/current/, async (msg) => {
+  const o = await checkOwner(msg);
+  if (!o) {
+    return;
+  }
   if (!current) {
     await bot.sendMessage(
       CHAT_ID,
@@ -49,8 +65,12 @@ bot.onText(/\/current/, async (msg) => {
   });
 });
 
-// /add
+// /add (root@abc)
 bot.onText(/\/add (.+)/, async (msg, match) => {
+  const o = await checkOwner(msg);
+  if (!o) {
+    return;
+  }
   const sv = match[1].trim().toLocaleLowerCase();
   if (sv.includes("@")) {
     servers.push(sv);
@@ -67,8 +87,12 @@ bot.onText(/\/add (.+)/, async (msg, match) => {
   }
 });
 
-// /rm
+// /rm (Index | IP)
 bot.onText(/\/rm (.+)/, async (msg, match) => {
+  const o = await checkOwner(msg);
+  if (!o) {
+    return;
+  }
   const sv = match[1].trim().toLocaleLowerCase();
   let find = null;
   if (
@@ -96,8 +120,12 @@ bot.onText(/\/rm (.+)/, async (msg, match) => {
   }
 });
 
-// /connect ID | IP
+// /connect (Index | IP)
 bot.onText(/\/connect (.+)/, async (msg, match) => {
+  const o = await checkOwner(msg);
+  if (!o) {
+    return;
+  }
   const sv = match[1].trim().toLocaleLowerCase();
   let find = null;
   if (
@@ -125,6 +153,10 @@ bot.onText(/\/connect (.+)/, async (msg, match) => {
 
 // /exit
 bot.onText(/\/exit/, async (msg, match) => {
+  const o = await checkOwner(msg);
+  if (!o) {
+    return;
+  }
   current = null;
   await bot.sendMessage(CHAT_ID, `Reset current server`, {
     disable_web_page_preview: true,
@@ -132,8 +164,12 @@ bot.onText(/\/exit/, async (msg, match) => {
   });
 });
 
-// /cmd
+// /cmd (command)
 bot.onText(/\/cmd (.+)/, async (msg, match) => {
+  const o = await checkOwner(msg);
+  if (!o) {
+    return;
+  }
   if (!current) {
     await bot.sendMessage(
       CHAT_ID,

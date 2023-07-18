@@ -14,4 +14,4 @@ Simple manager and ssh to your servers.
 - /rm (index | root@abc): remove an server
 - /connect (index | root@abc)
 - /exit: reset connected 
-- /cmd (command): execute command
+- /cmd (command): execute command at current server

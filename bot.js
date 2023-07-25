@@ -23,7 +23,7 @@ ssh.on("ready", async () => {
 });
 
 const sshExcute = (command, ping) => {
-  const conmm = command.includes("cd ") ? command : `cd ${pwd} && ${command}`;
+  const conmm = `cd ${pwd} && ${command}`;
 
   ssh.exec(conmm, (err, stream) => {
     let result = "";

@@ -17,4 +17,4 @@ Simple manager and ssh to your servers.
 - /cmd (command): execute command at current server
 
 # Demo
-![Demo telegram-ssh](https://raw.githubusercontent.com/phamthainb/telegram-ssh/master/demo.png)
+<img src="https://raw.githubusercontent.com/phamthainb/telegram-ssh/master/demo.png" alt="telegram-ssh" width="350" height="500" style="object-fit: cover;">

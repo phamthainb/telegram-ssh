@@ -14,7 +14,6 @@ Simple manager and ssh to your servers.
 - /rm (index | root@abc): remove an server
 - /connect (index | root@abc)
 - /exit: reset connected 
-- /cmd (command): execute command at current server
 
 # Demo
 <img src="https://raw.githubusercontent.com/phamthainb/telegram-ssh/master/demo.png" alt="telegram-ssh" width="350" height="500" style="object-fit: cover;">

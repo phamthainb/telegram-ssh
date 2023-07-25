@@ -1,7 +1,7 @@
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
-const { exec } = require("child_process");
 const dotenv = require("dotenv");
+const { Client } = require("ssh2");
 dotenv.config();
 
 const TOKEN = process.env.BOT_TOKEN || "";
@@ -13,6 +13,56 @@ const SERVERS_FILE = "servers.json";
 // Load the servers from the JSON file
 let servers = [];
 let current = null;
+
+// Connect to the SSH server using ssh2
+const ssh = new Client();
+let pwd = "~";
+
+ssh.on("ready", async () => {
+  await bot.sendMessage(CHAT_ID, "ssh successfully.");
+});
+
+const sshExcute = (command, ping) => {
+  const conmm = command.includes("cd ") ? command : `cd ${pwd} && ${command}`;
+
+  ssh.exec(conmm, (err, stream) => {
+    let result = "";
+
+    if (err) {
+      result = `${{ name: err.name, message: err.message, stack: err.stack }}`;
+      console.log(err);
+    }
+
+    stream.on("data", (data) => {
+      result += data.toString();
+    });
+
+    stream.on("close", async (code, signal) => {
+      // save pwd
+      if (command.includes("cd ")) {
+        pwd = command.split("cd ")[1];
+      }
+      if (ping) {
+        await bot.editMessageText(
+          `<b>${pwd}# ${command}</b>\n${result || pwd}`,
+          {
+            message_id: ping.message_id,
+            chat_id: ping.chat.id,
+            parse_mode: "HTML",
+          }
+        );
+      } else {
+        await bot.sendMessage(
+          CHAT_ID,
+          `<b>${pwd}# ${command}</b>\n${result || pwd}`,
+          {
+            parse_mode: "HTML",
+          }
+        );
+      }
+    });
+  });
+};
 
 if (fs.existsSync(SERVERS_FILE)) {
   servers = JSON.parse(fs.readFileSync(SERVERS_FILE, "utf8"));
@@ -31,7 +81,24 @@ async function checkOwner(msg) {
   return true;
 }
 
-// /list
+// bot.getMe().then((res) => {
+//   console.log(res);
+// });
+
+bot
+  .setMyCommands([
+    { command: "add", description: "add new an server /add user@abc.com" },
+    { command: "list", description: "list server" },
+    { command: "current", description: "current server" },
+    { command: "rm", description: "remove server" },
+    { command: "connect", description: "/connect ID | IP" },
+    { command: "exit", description: "exit" },
+  ])
+  .then((res) => {
+    console.log(res);
+  });
+
+// CRUD
 bot.onText(/\/list/, async (msg) => {
   const o = await checkOwner(msg);
   if (!o) {
@@ -47,7 +114,6 @@ bot.onText(/\/list/, async (msg) => {
     protect_content: true,
   });
 });
-// /current
 bot.onText(/\/current/, async (msg) => {
   const o = await checkOwner(msg);
   if (!o) {
@@ -65,11 +131,10 @@ bot.onText(/\/current/, async (msg) => {
     protect_content: true,
   });
 });
-
-// /add (root@abc)
 bot.onText(/\/add (.+)/, async (msg, match) => {
   const o = await checkOwner(msg);
   if (!o) {
+    await bot.sendMessage(CHAT_ID, "Value is invalid.");
     return;
   }
   const sv = match[1].trim().toLocaleLowerCase();
@@ -87,8 +152,6 @@ bot.onText(/\/add (.+)/, async (msg, match) => {
     });
   }
 });
-
-// /rm (Index | IP)
 bot.onText(/\/rm (.+)/, async (msg, match) => {
   const o = await checkOwner(msg);
   if (!o) {
@@ -121,7 +184,7 @@ bot.onText(/\/rm (.+)/, async (msg, match) => {
   }
 });
 
-// /connect (Index | IP)
+// ssh
 bot.onText(/\/connect (.+)/, async (msg, match) => {
   const o = await checkOwner(msg);
   if (!o) {
@@ -140,9 +203,12 @@ bot.onText(/\/connect (.+)/, async (msg, match) => {
   }
   if (find) {
     current = find;
-    await bot.sendMessage(CHAT_ID, `Set ${current} is current server`, {
-      disable_web_page_preview: true,
-      protect_content: true,
+    // try connect to current server
+    const info = current.split("@");
+    ssh.connect({
+      host: info[1],
+      username: info[0],
+      privateKey: fs.readFileSync(process.env.PATH_PRIVATEKEY),
     });
   } else {
     await bot.sendMessage(CHAT_ID, `${sv} is not valid`, {
@@ -151,69 +217,51 @@ bot.onText(/\/connect (.+)/, async (msg, match) => {
     });
   }
 });
-
-// /exit
 bot.onText(/\/exit/, async (msg, match) => {
   const o = await checkOwner(msg);
   if (!o) {
     return;
   }
   current = null;
+  ssh.end();
+
   await bot.sendMessage(CHAT_ID, `Reset current server`, {
     disable_web_page_preview: true,
     protect_content: true,
   });
 });
 
-// /cmd (command)
-bot.onText(/\/cmd (.+)/, async (msg, match) => {
+bot.on("text", async (msg) => {
   const o = await checkOwner(msg);
-  if (!o) {
+  if (!o || isBotCommand(msg)) {
     return;
   }
-  if (!current) {
+  if (!current && ssh) {
     await bot.sendMessage(
       CHAT_ID,
       `No server now, please connect one server before next.`
     );
     return;
   }
-
+  const ping = await bot.sendMessage(CHAT_ID, `exec...`);
   try {
-    console.log(match);
-    const command = `ssh ${current} '${match[1]}'`;
-    const ping = await bot.sendMessage(CHAT_ID, `Connecting...`);
-
-    exec(command, async function (error, stdout, stderr) {
-      console.log({ error, stdout, stderr });
-      if (stderr) {
-        await bot.editMessageText(`${current} stderr: ${stderr}`, {
-          message_id: ping.message_id,
-          chat_id: ping.chat.id,
-        });
-        return;
-      }
-      if (error) {
-        await bot.editMessageText(
-          `${current} error: ${JSON.stringify(error, null, 2)}`,
-          {
-            message_id: ping.message_id,
-            chat_id: ping.chat.id,
-          }
-        );
-        return;
-      }
-
-      console.log(stdout);
-      await bot.editMessageText(`${current} stdout:\n` + stdout, {
-        message_id: ping.message_id,
-        chat_id: ping.chat.id,
-      });
-    });
+    sshExcute(msg.text.trim(), ping);
   } catch (error) {
+    console.log(error);
     await bot.editMessageText(`Error: ${JSON.stringify(error, null, 2)}`, {
       message_id: ping.message_id,
       chat_id: ping.chat.id,
     });
   }
 });
+
+// helper
+function isBotCommand(message) {
+  if (!message || !message.entities) {
+    return false;
+  }
+  const botCommands = message.entities.filter(
+    (entity) => entity.type === "bot_command"
+  );
+  return botCommands.length > 0;
+}

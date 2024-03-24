@@ -21,3 +21,4 @@ Simple manager and ssh to your servers.
 # Todo
 - add description each server
 - try catch when ssh fail
+- auto close session when long time no active

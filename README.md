@@ -17,3 +17,7 @@ Simple manager and ssh to your servers.
 
 # Demo
 <img src="https://raw.githubusercontent.com/phamthainb/telegram-ssh/master/demo.png" alt="telegram-ssh" width="350" height="500" style="object-fit: cover;">
+
+# Todo
+- add description each server
+- try catch when ssh fail

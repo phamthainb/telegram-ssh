@@ -209,6 +209,7 @@ bot.onText(/\/connect (.+)/, async (msg, match) => {
       host: info[1],
       username: info[0],
       privateKey: fs.readFileSync(process.env.PATH_PRIVATEKEY),
+      port: 9022,
     });
   } else {
     await bot.sendMessage(CHAT_ID, `${sv} is not valid`, {

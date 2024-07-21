@@ -20,6 +20,7 @@ Simple manager and ssh to your servers.
 
 # Todo
 - add description each server
+  - host, username, password, port, pathPrivateKey, note
 - add custome port
 - try catch when ssh fail
 - auto close session when long time no active

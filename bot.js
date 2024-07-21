@@ -3,6 +3,7 @@ const fs = require("fs");
 const dotenv = require("dotenv");
 const { Client } = require("ssh2");
 dotenv.config();
+var exec = require("child_process").exec;
 
 const TOKEN = process.env.BOT_TOKEN || "";
 const CHAT_ID = process.env.CHAT_ID || "";
@@ -81,9 +82,9 @@ async function checkOwner(msg) {
   return true;
 }
 
-// bot.getMe().then((res) => {
-//   console.log(res);
-// });
+bot.getMe().then((res) => {
+  bot.sendMessage(CHAT_ID, "Hello there");
+});
 
 bot
   .setMyCommands([
@@ -93,10 +94,43 @@ bot
     { command: "rm", description: "remove server" },
     { command: "connect", description: "/connect ID | IP" },
     { command: "exit", description: "exit" },
+    { command: "cmd", description: "run any command on manager server" },
   ])
   .then((res) => {
     console.log(res);
   });
+
+bot.onText(/\/cmd (.+)/, async (msg, match) => {
+  const o = await checkOwner(msg);
+  if (!o) {
+    return;
+  }
+
+  try {
+    const command = match[1];
+    exec(command, async function (error, stdout, stderr) {
+      console.log({ error, stdout, stderr });
+
+      if (stderr) {
+        await bot.sendMessage(CHAT_ID, `stderr: ${stderr}`);
+        return;
+      }
+
+      if (error) {
+        await bot.sendMessage(
+          CHAT_ID,
+          `error: ${JSON.stringify(error, null, 2)}`
+        );
+        return;
+      }
+
+      console.log(stdout);
+      await bot.sendMessage(CHAT_ID, "stdout:\n" + stdout);
+    });
+  } catch (error) {
+    await bot.sendMessage(CHAT_ID, `Error: ${JSON.stringify(error, null, 2)}`);
+  }
+});
 
 // CRUD
 bot.onText(/\/list/, async (msg) => {

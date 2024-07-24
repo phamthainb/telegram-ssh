@@ -2,15 +2,16 @@ const { exec } = require("child_process");
 
 const pingHost = async (host) => {
   console.log("pingHost", host);
-  return new Promise((resolve, reject) => {
-    exec(`ping -c 1 ${host.trim()}`, (error, stdout, stderr) => {
-      if (error) {
-        reject(new Error(`Ping host failed\n${stderr}`));
-      } else {
-        resolve(stdout);
-      }
-    });
-  });
+  return true;
+  // return new Promise((resolve, reject) => {
+  //   exec(`ping -c 1 ${host.trim()}`, (error, stdout, stderr) => {
+  //     if (error) {
+  //       reject(new Error(`Ping host failed\n${stderr}`));
+  //     } else {
+  //       resolve(stdout);
+  //     }
+  //   });
+  // });
 };
 
 const isBotCommand = (message) => {

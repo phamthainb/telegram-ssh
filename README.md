@@ -31,6 +31,66 @@ A simple SSH manager and client for your servers, integrated with Telegram for e
 
 ## Setup
 
+### Option 1: Docker (Recommended)
+
+1. **Prerequisites**: Make sure Docker and Docker Compose are installed.
+
+2. **Configuration**:
+   
+   - Copy the example environment file and edit it with your values:
+     ```bash
+     cp .env.example .env
+     # Edit .env with your bot token, chat ID, and owner IDs
+     ```
+   
+   - Create directories for SSH keys and data:
+     ```bash
+     mkdir -p keys data
+     ```
+   
+   - Copy your SSH private key to the keys directory:
+     ```bash
+     cp /path/to/your/private/key keys/id_rsa
+     chmod 600 keys/id_rsa
+     ```
+
+3. **Run with Docker Compose**:
+   
+   ```bash
+   # Using .env file
+   docker-compose up -d
+   
+   # Or specify environment variables directly
+   BOT_TOKEN="your-token" CHAT_ID="your-chat-id" OWNER_IDS="owner1,owner2" docker-compose up -d
+   ```
+
+4. **Alternative Docker run**:
+   
+   ```bash
+   # Build the image
+   docker build -t telegram-ssh .
+   
+   # Run the container
+   docker run -d \
+     --name telegram-ssh \
+     --restart unless-stopped \
+     -e BOT_TOKEN="your-telegram-bot-token" \
+     -e CHAT_ID="your-chat-id" \
+     -e OWNER_IDS="comma-separated-owner-ids" \
+     -e PATH_PRIVATEKEY="/app/keys/id_rsa" \
+     -e SERVERS_FILE="/var/telegram-ssh/servers.json" \
+     -v ./keys:/app/keys:ro \
+     -v ./data:/var/telegram-ssh \
+     telegram-ssh
+   ```
+
+5. **View logs**:
+   ```bash
+   docker-compose logs -f telegram-ssh
+   ```
+
+### Option 2: Direct Node.js
+
 1. **SSH Keys**: Ensure your SSH keys are set up on each server you want to connect to.
 
 2. **Configuration**:

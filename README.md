@@ -8,28 +8,79 @@ A simple SSH manager and client for your servers, integrated with Telegram for e
 - **SSH Connection**: Connect and execute commands on your servers via SSH.
 - **Telegram Integration**: Interact with your servers through Telegram commands.
 
-## Command-Line Options
+## Configuration Options
 
-- **`--bot_token`, `-b`**: The Telegram bot token used for authentication with the Telegram API. This is required to interact with the Telegram bot.
+The bot can be configured via command-line arguments or environment variables:
 
-  - Example: `--bot_token "123456789:ABCdefGHIjklMNO_pQRstuVWxyZ"`
-
-- **`--chat_id`, `-c`**: The Telegram chat ID where the bot will send messages. This is the chat where you'll interact with the bot.
-
-  - Example: `--chat_id "987654321"`
-
-- **`--owner_ids`, `-o`**: Comma-separated list of owner chat IDs who have control over the bot. Only these users can execute bot commands.
-
-  - Example: `--owner_ids "111111111,222222222"`
-
-- **`--path_privatekey`, `-p`**: Path to the SSH private key file used to authenticate with your servers. Ensure this key matches the public key configured on your servers.
-
-  - Example: `--path_privatekey "/home/user/.ssh/id_rsa"`
-
-- **`--servers_file`, `-s`**: Path to the JSON file that contains the details of your servers. This file should be in the format expected by the bot.
-  - Example: `--servers_file "/path/to/servers.json"`
+| CLI Argument | Environment Variable | Description | Required |
+|-------------|---------------------|-------------|----------|
+| `--bot_token`, `-b` | `BOT_TOKEN` | Telegram bot token | Yes |
+| `--chat_id`, `-c` | `CHAT_ID` | Telegram chat ID | Yes |
+| `--owner_ids`, `-o` | `OWNER_IDS` | Comma-separated owner chat IDs | Yes |
+| `--path_privatekey`, `-p` | `PATH_PRIVATEKEY` | Path to SSH private key | Yes |
+| `--servers_file`, `-s` | `SERVERS_FILE` | Path to servers JSON file | No (default: `/var/telegram-ssh/servers.json`) |
 
 ## Setup
+
+### Option 1: Docker (Recommended)
+
+1. **Prerequisites**: Make sure Docker and Docker Compose are installed.
+
+2. **Configuration**:
+   
+   - Copy the example environment file and edit it with your values:
+     ```bash
+     cp .env.example .env
+     # Edit .env with your bot token, chat ID, and owner IDs
+     ```
+   
+   - Create directories for SSH keys and data:
+     ```bash
+     mkdir -p keys data
+     ```
+   
+   - Copy your SSH private key to the keys directory:
+     ```bash
+     cp /path/to/your/private/key keys/id_rsa
+     chmod 600 keys/id_rsa
+     ```
+
+3. **Run with Docker Compose**:
+   
+   ```bash
+   # Using .env file
+   docker-compose up -d
+   
+   # Or specify environment variables directly
+   BOT_TOKEN="your-token" CHAT_ID="your-chat-id" OWNER_IDS="owner1,owner2" docker-compose up -d
+   ```
+
+4. **Alternative Docker run**:
+   
+   ```bash
+   # Build the image
+   docker build -t telegram-ssh .
+   
+   # Run the container
+   docker run -d \
+     --name telegram-ssh \
+     --restart unless-stopped \
+     -e BOT_TOKEN="your-telegram-bot-token" \
+     -e CHAT_ID="your-chat-id" \
+     -e OWNER_IDS="comma-separated-owner-ids" \
+     -e PATH_PRIVATEKEY="/app/keys/id_rsa" \
+     -e SERVERS_FILE="/var/telegram-ssh/servers.json" \
+     -v ./keys:/app/keys:ro \
+     -v ./data:/var/telegram-ssh \
+     telegram-ssh
+   ```
+
+5. **View logs**:
+   ```bash
+   docker-compose logs -f telegram-ssh
+   ```
+
+### Option 2: Direct Node.js
 
 1. **SSH Keys**: Ensure your SSH keys are set up on each server you want to connect to.
 
@@ -85,5 +136,30 @@ docker run -d -p 2223:22 --name ubuntu-server03 -e ROOT_PASSWORD="my_password" t
 - [ ] Build to binary executable for simple setup (no need nodejs installed)
 - [ ] Implement `try-catch` blocks for SSH failures.
 - [ ] Automatically close sessions after a period of inactivity.
+
+## Troubleshooting
+
+### Docker Issues
+
+- **Module not found errors**: Ensure your Docker build completed successfully and all dependencies were installed.
+- **Permission denied on SSH keys**: Make sure your SSH key file has proper permissions (`chmod 600 keys/id_rsa`).
+- **Volume mount issues**: Verify that the `./keys` and `./data` directories exist and have correct permissions.
+
+### General Issues
+
+- **Bot not responding**: Check that your `BOT_TOKEN` is valid and the bot is added to your chat.
+- **SSH connection fails**: Verify that your SSH key is properly configured on the target servers.
+- **Permission denied**: Ensure your `OWNER_IDS` includes your Telegram user ID.
+
+### Getting Help
+
+Check the logs for detailed error messages:
+```bash
+# For Docker Compose
+docker compose logs -f telegram-ssh
+
+# For direct Docker run
+docker logs telegram-ssh
+```
 
 ---

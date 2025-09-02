@@ -1,0 +1,26 @@
+services:
+  telegram-ssh:
+    build: .
+    container_name: telegram-ssh
+    restart: unless-stopped
+    environment:
+      # Replace with your actual values or use .env file
+      - BOT_TOKEN=123456789:ABCdefGHIjklMNO_pQRstuVWxyZ
+      - CHAT_ID=987654321
+      - OWNER_IDS=111111111,222222222
+      - PATH_PRIVATEKEY=/app/keys/id_rsa
+      - SERVERS_FILE=/var/telegram-ssh/servers.json
+    volumes:
+      # Mount your SSH private key directory
+      # Make sure to place your private key in ./keys/id_rsa
+      - ./keys:/app/keys:ro
+      # Mount data directory for persistent server list
+      - ./data:/var/telegram-ssh
+    # Uncomment for custom network configuration
+    # networks:
+    #   - telegram-ssh-network
+
+# Uncomment for custom network
+# networks:
+#   telegram-ssh-network:
+#     driver: bridge

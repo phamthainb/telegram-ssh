@@ -17,32 +17,36 @@ const argv = yargs(hideBin(process?.argv))
     alias: "b",
     describe: "Telegram bot token",
     type: "string",
-    demandOption: true,
+    demandOption: !process.env.BOT_TOKEN,
+    default: process.env.BOT_TOKEN,
   })
   .option("chat_id", {
     alias: "c",
     describe: "Telegram chat ID",
     type: "string",
-    demandOption: true,
+    demandOption: !process.env.CHAT_ID,
+    default: process.env.CHAT_ID,
   })
   .option("owner_ids", {
     alias: "o",
     describe: "Comma-separated list of owner chat IDs",
     type: "string",
-    demandOption: true,
+    demandOption: !process.env.OWNER_IDS,
+    default: process.env.OWNER_IDS,
   })
   .option("path_privatekey", {
     alias: "p",
     describe: "Path to SSH private key",
     type: "string",
-    demandOption: true,
+    demandOption: !process.env.PATH_PRIVATEKEY,
+    default: process.env.PATH_PRIVATEKEY,
   })
   .option("servers_file", {
     alias: "s",
     describe: "Path to servers JSON file",
     type: "string",
-    demandOption: true,
-    default: "/var/telegram-ssh/servers.json",
+    demandOption: !process.env.SERVERS_FILE,
+    default: process.env.SERVERS_FILE || "/var/telegram-ssh/servers.json",
   }).argv;
 
 const TOKEN = argv?.bot_token,
